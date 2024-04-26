@@ -67,17 +67,26 @@ app.post("/users", function (req, res) {
 app.post("/users/login", async function (req, res) {
   //Denna kod skapar en token att returnera till anroparen
   let connection = await getDBConnnection();
-  const salt = await bcrypt.genSalt(10); // genererar ett salt till hashning
-  const hashedPassword = await bcrypt.hash(req.body.password, salt); //hashar lösenordet
 
   let sql = `SELECT users
-  WHERE username = ?, password = ?, id = ?`;
+  WHERE username = ?`;
 
-  // let [results] = await connection.execute(sql, [
-  //   req.body.username,
-  //   hashedPassword,
-  //   req.params.id,
-  // ]);
+  let [results] = await connection.execute(sql, [req.body.username]);
+
+  let user = results[0];
+  let hashedPassword = user.password;
+
+  let isPasswordCorrect = await bcrypt.compare(
+    req.body.password,
+    hashedPassword
+  );
+
+  if (isPasswordCorrect) {
+    // Skicka info om användaren, utan känslig info som t.ex. hash
+  } else {
+    // Skicka felmeddelande
+    res.status(400).json({ error: "Invalid credentials" });
+  }
 
   // if(req.body.username){};
 
