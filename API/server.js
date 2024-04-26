@@ -68,7 +68,7 @@ app.post("/users/login", async function (req, res) {
   //Denna kod skapar en token att returnera till anroparen
   let connection = await getDBConnnection();
 
-  let sql = `SELECT users
+  let sql = `SELECT * FROM users
   WHERE username = ?`;
 
   let [results] = await connection.execute(sql, [req.body.username]);
