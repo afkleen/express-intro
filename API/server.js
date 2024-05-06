@@ -131,3 +131,50 @@ const register = async (req, res) => {
   const salt = await bcrypt.genSalt(10); // genererar ett salt till hashning
   const hashedPassword = await bcrypt.hash(password, salt); //hashar lösenordet
 };
+let authHeader = req.headers["authorization"];
+if (authHeader === undefined) {
+  return res.status(401).send("Authorization header is missing");
+}
+
+let token = authHeader.slice(7);
+
+let decoded;
+try {
+  decoded = jwt.verify(token, "din superhemliga secret");
+} catch (err) {
+  console.log(err);
+  return res.status(401).send("Invalid auth token");
+}
+
+req.user = decoded;
+
+res.send(`Välkommen ${req.user.name}, du är nu autentiserad!`);
+
+//Route för att testa token.
+app.get("/auth-test", function (req, res) {
+  let authHeader = req.headers["authorization"]; //Hämtar värdet (en sträng med token) från authorization headern i requesten
+
+  if (authHeader === undefined) {
+    res.status(401).send("Auth token missing.");
+  }
+
+  let token = authHeader.slice(7); // Tar bort "BEARER " som står i början på strängen.
+  console.log("token: ", token);
+
+  let decoded;
+  try {
+    // Verifiera att detta är en korrekt token. Den ska vara:
+    // * skapad med samma secret
+    // * omodifierad
+    // * fortfarande giltig
+    decoded = jwt.verify(token, THESECRET);
+  } catch (err) {
+    // Om något är fel med token så kastas ett error.
+
+    console.error(err); //Logga felet, för felsökning på servern.
+
+    res.status(401).send("Invalid auth token");
+  }
+
+  res.send(decoded); // Skickar tillbaka den avkodade, giltiga, tokenen.
+});
